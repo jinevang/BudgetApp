@@ -161,10 +161,10 @@ def main():
             print("Expense added.")
         elif choice == '4':
             print("Current month transactions:")
-            view_transactions("month")
+            # view_transactions("month")
         elif choice == '5':
             print("Current year transactions:")
-            view_transactions("year")
+            # view_transactions("year")
         elif choice == '6':
             print("Breakdown by category:")
             category = choose_category()
