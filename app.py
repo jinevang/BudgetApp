@@ -1,12 +1,12 @@
 import json
 import os
 from datetime import datetime
-import sqlite3
 
-DATA_FILE = 'budget_data.json'
 DATA_DIR = 'data'
 
 expense_categories = ["Food/Dining", "Drink/Dessert", "Personal Care", "Transportation", "Utilities", "Shopping", "Income", "Health", "Groceries", "Entertainment", "Donation"]
+
+settings = ["Add category", "Delete category", "Change ratio targets"]
 
 data = {
      "transactions": []
@@ -25,82 +25,102 @@ def choose_category():
                 print("Invalid choice, please enter a valid number.")
         except ValueError:
             print("Invalid input, please enter a number.")
+            
+def choose_settings():
+    print("Please make your selection:")
+    for idx, setting in enumerate(settings, start=1):
+        print(f"{idx}) {setting}")
+    while True:
+        try:
+            choice = int(input("Choice: "))
+            if choice == 'e': break
+            if 1 <= choice <= len(expense_categories):
+                return expense_categories[choice - 1]  # Return the selected category
+            else:
+                print("Invalid choice, please enter a valid number.")
+        except ValueError:
+            print("Invalid input, please enter a number.")
 
 def load_data(year):
-    file_path = os.path.join(DATA_DIR, f'{year}_budget_data.json')
-    if os.path.exists(file_path):
-        with open(file_path, 'r') as file:
+    file_name = os.path.join(DATA_DIR, f'{year}_budget_data.json')
+    if os.path.exists(file_name):
+        with open(file_name, 'r') as file:
             return json.load(file)
-    return {"transactions": []}  # Return an empty structure if no data for that year
+    return {}  # Return an empty dictionary if no data exists
 
-def save_data(year, transactions):
-    file_path = os.path.join(DATA_DIR, f'{year}_budget_data.json')
-    with open(file_path, 'w') as file:
-        json.dump({"transactions": transactions}, file, indent=4)
-        
+def save_data(year, data):
+    file_name = os.path.join(DATA_DIR, f'{year}_budget_data.json')
+    with open(file_name, 'w') as file:
+        json.dump(data, file, indent=4)
 
 def view_recent_transactions():
     print('Viewing recent transactions')
 
-def add_transaction(type, amount, category, description='', date=''):
+def add_transaction(name, type, amount, category, description='', date=''):
     if not date:
-        date = datetime.now().strftime("%Y-%m-%d")
-    year = date.split('-')[0]  # Extract the year from the date
-
-    # Load existing data for the TEST
-    transactions_data = load_data(year)
-
-    # Create the transaction
+        date = datetime.now().strftime('%m/%d/%Y')
+    print(date)
+    try:
+        month, _, year = date.split('/')
+    except ValueError:
+        print("Error: Date must be in MM/DD/YYYY format.")
+        return
+    
+    data = load_data(year)
+    
+    if month not in data:
+        data[month] = []
+    
     transaction = {
+        "name": name,
         "type": type,
         "amount": amount,
         "description": description,
         "date": date,
         "category": category
     }
-
-    # Add the transaction to the data
-    transactions_data['transactions'].append(transaction)
     
-    # Save the data back to the file
-    save_data(year, transactions_data['transactions'])
-
+    # Append the transaction to the appropriate list
+    data[month].append(transaction)
+    
+    # Save the updated data
+    save_data(year, data)
 
 options = ["Add income", "Add expense", "View balance", "See current month breakdown", "See current year breakdown"]
 
-def view_transactions(period="month"):
-    now = datetime.now()
-    year = str(now.year)
+# def view_transactions(period="month"):
+#     now = datetime.now()
+#     year = str(now.year)
 
-    # Load the data for the current year
-    transactions_data = load_data(year)
-    period_transactions = []
+#     # Load the data for the current year
+#     transactions_data = load_data(year)
+#     period_transactions = []
 
-    # Filter transactions based on the period
-    if period == "month":
-        period_transactions = [t for t in transactions_data["transactions"]
-                               if datetime.strptime(t["date"], "%Y-%m-%d").month == now.month]
-    elif period == "year":
-        period_transactions = transactions_data["transactions"]
+#     # Filter transactions based on the period
+#     if period == "month":
+#         period_transactions = [t for t in transactions_data["transactions"]
+#                                if datetime.strptime(t["date"], "%Y-%m-%d").month == now.month]
+#     elif period == "year":
+#         period_transactions = transactions_data["transactions"]
 
-    # Calculate totals and display
-    total_income = 0
-    total_expense = 0
+#     # Calculate totals and display
+#     total_income = 0
+#     total_expense = 0
 
-    for t in period_transactions:
-        amount = t['amount']
-        if t['type'] == 'income':
-            total_income += amount
-        else:
-            total_expense += amount
-        print(f"{t['date']} - {t['type'].capitalize()}: ${amount:.2f} ({t['description']})")
+#     for t in period_transactions:
+#         amount = t['amount']
+#         if t['type'] == 'income':
+#             total_income += amount
+#         else:
+#             total_expense += amount
+#         print(f"{t['date']} - {t['type'].capitalize()}: ${amount:.2f} ({t['description']})")
 
-    # Display summary
-    net_balance = total_income - total_expense
-    print("\nSummary:")
-    print(f"Total Income: ${total_income:.2f}")
-    print(f"Total Expense: ${total_expense:.2f}")
-    print(f"Net Balance: ${net_balance:.2f}")
+#     # Display summary
+#     net_balance = total_income - total_expense
+#     print("\nSummary:")
+#     print(f"Total Income: ${total_income:.2f}")
+#     print(f"Total Expense: ${total_expense:.2f}")
+#     print(f"Net Balance: ${net_balance:.2f}")
 
 def ensure_data_dir_exists():
     if not os.path.exists(DATA_DIR):
@@ -117,23 +137,27 @@ def main():
         print("4) See current month breakdown")
         print("5) See current year breakdown")
         print("6) See breakdown by category")
-        print("7) Exit")
-        print("8) clear transactions")
+        print("7) See breakdown by location")
+        print("8) Settings")
+        print("9) Exit")
         
         choice = input("Choose an option: ")
         
         if choice == '1':
+            name = input("Enter name of income source: ")
             amount = float(input("Enter income amount: "))
             description = input("Enter description (optional): ")
             date = input("Enter date (if left empty, it will add the current day) ")
-            add_transaction("income", amount, 'income', description, date)
+            add_transaction(name, "income", amount, 'income', description, date)
             print("Income added.")
         elif choice == '2':
+            name = input("Enter name of expense: ")
+
             amount = float(input("Enter expense amount: "))
             category = choose_category()
             description = input("Enter description (optional): ")
             date = input("Enter date (if left empty, it will add the current day) ")
-            add_transaction("expense", amount, category, description, date)
+            add_transaction(name, "expense", amount, category, description, date)
             print("Expense added.")
         elif choice == '4':
             print("Current month transactions:")
@@ -144,12 +168,15 @@ def main():
         elif choice == '6':
             print("Breakdown by category:")
             category = choose_category()
-        elif choice == '7':
+        elif choice =='7':
+            print('breakdown by location')
+        elif choice == '8':
+            print('settings')
+            choose_settings()
+        elif choice == '9':
             print("Exiting the app.")
             break
-        elif choice == '8':
-            print('deleting everything')
-            os.remove('budget_data.json')
+            
         else:
             print("Invalid option. Please try again.")
 
