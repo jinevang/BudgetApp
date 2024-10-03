@@ -27,7 +27,7 @@ def choose_category():
             print("Invalid input, please enter a number.")
             
 def choose_settings():
-    print("Please make your selection!:")
+    print("Please make your selection:")
     for idx, setting in enumerate(settings, start=1):
         print(f"{idx}) {setting}")
     while True:
