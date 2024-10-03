@@ -46,7 +46,7 @@ def load_data(year):
     if os.path.exists(file_name):
         with open(file_name, 'r') as file:
             return json.load(file)
-    return {}  # Return an empty dictionary if no data exists
+    return {} 
 
 def save_data(year, data):
     file_name = os.path.join(DATA_DIR, f'{year}_budget_data.json')
