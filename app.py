@@ -47,7 +47,7 @@ def add_transaction(type, amount, category, description='', date=''):
         date = datetime.now().strftime("%Y-%m-%d")
     year = date.split('-')[0]  # Extract the year from the date
 
-    # Load existing data for the year
+    # Load existing data for the TEST
     transactions_data = load_data(year)
 
     # Create the transaction
