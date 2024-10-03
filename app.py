@@ -20,7 +20,7 @@ def choose_category():
         try:
             choice = int(input("Enter the number of the category: "))
             if 1 <= choice <= len(expense_categories):
-                return expense_categories[choice - 1]  # Return the selected category
+                return expense_categories[choice - 1]
             else:
                 print("Invalid choice, please enter a valid number.")
         except ValueError:
@@ -35,7 +35,7 @@ def choose_settings():
             choice = int(input("Choice: "))
             if choice == 'e': break
             if 1 <= choice <= len(expense_categories):
-                return expense_categories[choice - 1]  # Return the selected category
+                return expense_categories[choice - 1]
             else:
                 print("Invalid choice, please enter a valid number.")
         except ValueError:
