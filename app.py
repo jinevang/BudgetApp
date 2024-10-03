@@ -169,12 +169,13 @@ def main():
             print("Breakdown by category:")
             category = choose_category()
         elif choice =='7':
-            print('breakdown by location')
+            print('Breakdown by location')
+            location = input('Enter location name: ')
         elif choice == '8':
             print('settings')
             choose_settings()
         elif choice == '9':
-            print("Exiting the app.")
+            print("Exiting the app")
             break
             
         else:
