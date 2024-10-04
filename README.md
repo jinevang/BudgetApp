@@ -1,4 +1,4 @@
 # BudgetApp
 
-## Description
-Lightweight budgeting app
+Lightweight budgeting app built using Python
+Stores all data locally
