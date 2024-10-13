@@ -177,9 +177,6 @@ def view_year_transactions(year=''):
 def view_summary(month=''):
     if not month:
         month = datetime.now().month
-        
-    
-    
 
 def ensure_data_dir_exists():
     if not os.path.exists(DATA_DIR):
