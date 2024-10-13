@@ -129,8 +129,7 @@ def add_transaction(name, type, amount, category, description='', date=''):
     
     print('Expense added!')
 
-
-def view_transactions(period="month", month=''):
+def view_transactions(month=''):
     now = datetime.now()
     year = str(now.year)
     if not month:
@@ -139,18 +138,16 @@ def view_transactions(period="month", month=''):
     transactions_data = load_data(year)
     period_transactions = []
     
-    print(f'Transactions for: {calendar.month_name[int(month)]}')
     
     if str(month) not in transactions_data:
         print(f'There are no transactions for {calendar.month_name[int(month)]}')
         return
     
-    if period == "month":
-        transactions_data[str(month)].sort(key=lambda x: datetime.strptime(x["date"], "%m/%d/%Y"))
+    print(f'Transactions for: {calendar.month_name[int(month)]}')
+    
+    transactions_data[str(month)].sort(key=lambda x: datetime.strptime(x["date"], "%m/%d/%Y"))
         
-        period_transactions = [t for t in transactions_data[str(month)] if t['type'] != "income"]
-    elif period == "year":
-        period_transactions = transactions_data["transactions"]
+    period_transactions = [t for t in transactions_data[str(month)] if t['type'] != "income"]
 
     # Calculate totals and display
     total_expense = 0
@@ -160,8 +157,7 @@ def view_transactions(period="month", month=''):
         total_expense += amount
         print(f"{t['date']} - {t['name']}: ${amount:.2f} ({t['category']})")
 
-    # Display summary
-    print(f"\nTotal Expense: ${total_expense:.2f}")
+    print(f"\nTotal Expenses this month: ${total_expense:.2f}")
     
 def view_year_transactions(year=''):
     if not year:
@@ -218,12 +214,11 @@ def main():
             print("Income added.")
             add_transaction(name, "expense", amount, category, description, date)
         elif choice == '4':
-            month = input('Enter month (as a number) (optional): ')
-            view_transactions("month", month)
+            month = input('Enter month (as a number) (blank=current): ')
+            view_transactions(month)
         elif choice == '5':
             print("Current year transactions:")
             print('year not currently implemented')
-            # view_transactions("year")
         elif choice == '6':
             print("Breakdown by category:")
             category = choose_category()
