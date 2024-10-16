@@ -205,6 +205,7 @@ def main():
             category = choose_category()
             description = input("Enter description (optional): ")
             date = input("Enter date (MM/DD/YYYY) (if left empty, it will add the current day): ")
+            add_transaction(name, "expense", amount, category, description, date)
         elif choice == '2':
             name = input("Enter name of income source: ")
             amount = float(input("Enter income amount: "))
@@ -212,7 +213,6 @@ def main():
             date = input("Enter date (MM/DD/YYYY) (if left empty, it will add the current day): ")
             add_transaction(name, "income", amount, 'income', description, date)
             print("Income added.")
-            add_transaction(name, "expense", amount, category, description, date)
         elif choice == '4':
             month = input('Enter month (as a number) (blank=current): ')
             view_transactions(month)
@@ -222,6 +222,7 @@ def main():
         elif choice == '6':
             print("Breakdown by category:")
             category = choose_category()
+            month = input('Enter month (as number): ')
         elif choice =='7':
             print('Breakdown by location')
             location = input('Enter location name: ')
