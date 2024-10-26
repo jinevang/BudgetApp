@@ -19,6 +19,15 @@ data = {
      "transactions": []
 }
 
+def add_reoccuring(name, type, amount, category, description='', date=''):
+    print()
+
+def update_category(categoryname):
+    print()
+
+def delete_category(replacementcategory):
+    print()
+
 def choose_category():
     print("Please choose a category for the expense:")
     for idx, category in enumerate(expense_categories, start=1):
@@ -32,21 +41,6 @@ def choose_category():
                 print("Invalid choice, please enter a valid number.")
         except ValueError:
             print("Invalid input, please enter a number.")
-            
-# def choose_settings():
-#     print("Please make your selection:")
-#     for idx, setting in enumerate(settings, start=1):
-#         print(f"{idx}) {setting}")
-#     while True:
-#         try:
-#             choice = int(input("Choice: "))
-#             if choice == 'e': break
-#             if 1 <= choice <= len(expense_categories):
-#                 return expense_categories[choice - 1]
-#             else:
-#                 print("Invalid choice, please enter a valid number.")
-#         except ValueError:
-#             print("Invalid input, please enter a number.")
 
 def load_data(year):
     file_name = os.path.join(DATA_DIR, f'{year}_budget_data.json')
@@ -62,7 +56,7 @@ def load_categories():
     if data["categories"]:
         expense_categories = [c["name"] for c in data["categories"]]
 
-def add_category(category_name, type):
+def add_category(category_name, type, icon=''):
     global expense_categories
     categories = load_file(DATA_DIR, 'categories')
     
@@ -78,7 +72,8 @@ def add_category(category_name, type):
     
     new_category = {
         "name": category_name,
-        "type": "want" if type.startswith('w') else "need"
+        "type": "want" if type.startswith('w') else "need",
+        "icon": icon
     }
     
     categories["categories"].append(new_category)
@@ -101,6 +96,7 @@ def view_recent_transactions(number):
     print('Viewing recent transactions')
 
 def add_transaction(name, type, amount, category, description='', date=''):
+    
     if not date:
         date = datetime.now().strftime('%m/%d/%Y')
         
@@ -167,7 +163,6 @@ def view_transactions(month=''):
     print(f"Total Income this month: ${total_income:.2f}")
     print(f"Net for this month: ${total_income - total_expense:.2f}")
     
-    
 def view_year_transactions(year=''):
     if not year:
         year = datetime.now().year
@@ -219,8 +214,8 @@ def choose_settings():
     if chosensetting == 1:
         category = input('Enter new category name: ')
         type = input('Want/Need?: ')
-        emoji = input('Add custom emoji?: ')
-        add_category(category, type)
+        icon = input('Add custom icon?: ')
+        add_category(category, type, icon)
     if chosensetting == 2:
         print()
     if chosensetting == 3:
@@ -238,16 +233,13 @@ def main():
         print("\nBudgeting App")
         print("1) Add expense")
         print("2) Add income")
-        print("3) View balance")
-        print("4) View month breakdown")
-        print("5) See current year breakdown")
-        print("6) See breakdown by category")
-        print("7) See breakdown by location")
-        print("8) Settings")
-        print("9) Exit")
-        print("10) Help")
-
-
+        print("3) View month breakdown")
+        print("4) See current year breakdown")
+        print("5) See breakdown by category")
+        print("6) See breakdown by location")
+        print("7) Settings")
+        print("8) Exit")
+        print("9) Help")
         
         choice = input("Choose an option: ")
         
@@ -269,31 +261,32 @@ def main():
             date = input("Enter date (MM/DD/YYYY) [if left empty, it will add the current day]: ")
             add_transaction(name, "income", amount, 'income', description, date)
             print("Income added!")
-        elif choice == '4':
+        elif choice == '3':
             print('\n---BREAKDOWN BY MONTH---')
             month = input('Enter month (as a number) [optional]: ')
             view_transactions(month)
-        elif choice == '5':
+        elif choice == '4':
             print('\n---BREAKDOWN OF THE CURRENT YEAR---')
             view_year_transactions()
-        elif choice == '6':
+        elif choice == '5':
             print("\n---BREAKDOWN BY CATEGORY---")
             category = choose_category()
             month = input('Enter month (as number): ')
             print('Category breakdown is not implemented yet.')
-        elif choice =='7':
+        elif choice =='6':
             print('\n---Breakdown by location---')
             location = input('Enter location name: ')
             print('Location breakdown is not implemented yet.')
-        elif choice == '8':
-            print('\n---Settings---')
+        elif choice == '7':
+            print('\n---SETTINGS---')
             choose_settings()
 
-        elif choice == '9':
-            print("---Exiting the app---")
+        elif choice == '8':
+            print("---EXITING THE APP: bye bye!---")
             break
-        elif choice == '10':
-            print('Help')
+        elif choice == '9':
+            print('This is a lightweight budgeting app built in Python!')
+            print('© Evan Jin 2024')
         else:
             print("Invalid option! Please try again.")
 
