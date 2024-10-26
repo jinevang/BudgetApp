@@ -5,5 +5,5 @@ Stores all data locally
 
 To run:
 ```
-	python3 app.py
+python3 app.py
 ```
