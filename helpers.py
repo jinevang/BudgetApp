@@ -38,3 +38,19 @@ def save_to_file(data, datadir, filename):
   file_name = os.path.join(datadir, f'{filename}.json')
   with open(file_name, 'w') as file:
       json.dump(data, file, indent=4)
+
+def choose_from_array(array, prompt="Please enter your selection", returnindex=False):
+  for idx, item in enumerate(array, start=1):
+        print(f"{idx}) {item}")
+  while True:
+    try:
+        choice = int(input(f"{prompt}: "))  # Use f-string to format the prompt with ":"
+        if 1 <= choice <= len(array):
+            if returnindex:
+              return choice - 1
+            else:
+              return array[choice - 1]
+        else:
+            print("Invalid choice, please enter a valid number.")
+    except ValueError:
+        print("Invalid input, please enter a number.")
