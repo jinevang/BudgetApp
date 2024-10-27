@@ -2,6 +2,8 @@ import json
 import os
 from datetime import datetime
 import calendar
+from collections import defaultdict
+
 
 from helpers import parse_date, load_file, save_to_file, choose_from_array
 
@@ -11,7 +13,7 @@ DATA_DIR = 'data'
 
 expense_categories = []
 
-settings = ["Set up reoccurring", "Add category", "Delete category", "Update Category", "Change ratio targets"]
+settings = ["Add category", "Delete category", "Update category", "Change ratio targets", "Exit"]
 
 options = ["Add income", "Add expense", "View balance", "See current month breakdown", "See current year breakdown"]
 
@@ -92,7 +94,7 @@ def save_data(year, data):
     with open(file_name, 'w') as file:
         json.dump(data, file, indent=4)
 
-def view_recent_transactions(number):
+def view_recent_transactions(number=5):
     print('Viewing recent transactions')
 
 def add_transaction(name, type, amount, category, description='', date=''):
@@ -145,6 +147,23 @@ def view_transactions(month=''):
         
     period_transactions = [t for t in transactions_data[str(month)] if t['type'] != "income"]
     period_income = [t for t in transactions_data[str(month)] if t['type'] == "income"]
+    
+    cumulative_by_name = defaultdict(int)
+    cumulative_by_category = defaultdict(int)
+
+    for obj in period_transactions:
+        # Group by name
+        cumulative_by_name[obj["name"]] += obj["amount"]
+        # Group by type
+        cumulative_by_category[obj["category"]] += obj["amount"]
+
+    # Step 2: Find the name with the highest cumulative amount
+    highest_name = max(cumulative_by_name, key=cumulative_by_name.get)
+    highest_name_amount = cumulative_by_name[highest_name]
+
+    # Step 3: Find the type with the highest cumulative amount
+    highest_category = max(cumulative_by_category, key=cumulative_by_category.get)
+    highest_category_amount = cumulative_by_category[highest_category]
 
     total_expense = 0
     total_income = 0
@@ -163,6 +182,45 @@ def view_transactions(month=''):
     print(f"Total Income this month: ${total_income:.2f}")
     print(f"Net for this month: ${total_income - total_expense:.2f}")
     
+    print(f"\nLocation with highest amount: {highest_name} - ${highest_name_amount:.2f}")
+    
+    print(f"Category with highest amount: {highest_category} - ${highest_category_amount:.2f}")
+
+
+def category_breakdown(month=''):
+    if not month:
+        month = datetime.now().month
+    
+    print(f'\nViewing summary for categories for {calendar.month_name[int(month)]}')
+    transactions_data = load_data(datetime.now().year)
+    
+    period_transactions = [t for t in transactions_data[str(month)] if t['type'] != "income"]
+
+    cumulative_by_category = defaultdict(int)
+    
+    for obj in period_transactions:
+        cumulative_by_category[obj["category"]] += obj["amount"]
+        
+    for category, amount in cumulative_by_category.items():
+        print(f"{category}: ${amount:.2f}")
+
+def location_breakdown(month=''):
+    if not month:
+        month = datetime.now().month
+    
+    print(f'\nViewing summary for location for {calendar.month_name[int(month)]}')
+    transactions_data = load_data(datetime.now().year)
+    
+    period_transactions = [t for t in transactions_data[str(month)] if t['type'] != "income"]
+
+    cumulative_by_name = defaultdict(int)
+    
+    for obj in period_transactions:
+        cumulative_by_name[obj["name"]] += obj["amount"]
+        
+    for name, amount in cumulative_by_name.items():
+        print(f"{name}: ${amount:.2f}")
+
 def view_year_transactions(year=''):
     if not year:
         year = datetime.now().year
@@ -208,21 +266,25 @@ def ensure_data_dir_exists():
 def choose_settings():
     chosensetting = choose_from_array(settings, "Which setting", True)
     print(settings[chosensetting])
-    
+
     if chosensetting == 0:
-        print('')
-    if chosensetting == 1:
+        # new category
         category = input('Enter new category name: ')
         type = input('Want/Need?: ')
         icon = input('Add custom icon?: ')
         add_category(category, type, icon)
+    if chosensetting == 1:
+        # delete category
+        print()
     if chosensetting == 2:
+        # update category
         print()
     if chosensetting == 3:
+        # change ratio targets
         print()
-    
-    
-    
+    if chosensetting == 4:
+        return
+
 
 def main():
     ensure_data_dir_exists()
@@ -248,8 +310,8 @@ def main():
             name = input("Enter name of expense: ")
             amount = float(input("Enter expense amount: "))
             category = choose_category()
-            description = input("Enter description (optional): ")
             date = input("Enter date (MM/DD/YYYY) [if left empty, it will add the current day]: ")
+            description = input("Enter description (optional): ")
             add_transaction(name, "expense", amount, category, description, date)
             print('Expense added!')
 
@@ -257,8 +319,8 @@ def main():
             print("\n---ADD NEW INCOME---")
             name = input("Enter name of income source: ")
             amount = float(input("Enter income amount: "))
-            description = input("Enter description (optional): ")
             date = input("Enter date (MM/DD/YYYY) [if left empty, it will add the current day]: ")
+            description = input("Enter description (optional): ")
             add_transaction(name, "income", amount, 'income', description, date)
             print("Income added!")
         elif choice == '3':
@@ -270,13 +332,12 @@ def main():
             view_year_transactions()
         elif choice == '5':
             print("\n---BREAKDOWN BY CATEGORY---")
-            category = choose_category()
             month = input('Enter month (as number): ')
-            print('Category breakdown is not implemented yet.')
+            category_breakdown(month)
         elif choice =='6':
-            print('\n---Breakdown by location---')
-            location = input('Enter location name: ')
-            print('Location breakdown is not implemented yet.')
+            print('\n---BREAKDOWN BY LOCATION---')
+            month = input('Enter month (as number): ')
+            location_breakdown(month)
         elif choice == '7':
             print('\n---SETTINGS---')
             choose_settings()
