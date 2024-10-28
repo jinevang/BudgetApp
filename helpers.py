@@ -26,6 +26,24 @@ def parse_date(date_str):
   except ValueError as e:
     print(f"Error: {e}")
     return None
+
+def get_category_type(category_name, data):
+  for category in data["categories"]:
+    if category["name"] == category_name:
+      return category["type"]
+  return ""
+
+def get_category_icon(category_name, data):
+  for category in data["categories"]:
+    if category["name"] == category_name:
+      return category["icon"]
+  return ""
+  
+def ignore_field(category_name, data):
+  for category in data["categories"]:
+    if category["name"] == category_name:
+      return category["ignore"]
+  return False
   
 def load_file(datadir, filename):
   file_name = os.path.join(datadir, f'{filename}.json')

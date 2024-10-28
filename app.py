@@ -5,7 +5,7 @@ import calendar
 from collections import defaultdict
 
 
-from helpers import parse_date, load_file, save_to_file, choose_from_array
+from helpers import parse_date, load_file, save_to_file, choose_from_array, ignore_field, get_category_icon, get_category_type
 
 from operator import itemgetter
 
@@ -127,7 +127,10 @@ def add_transaction(name, type, amount, category, description='', date=''):
     # Save the updated data
     save_data(year, data)
     
-def view_transactions(month=''):
+    print(f'{type} added! ({name} - ${amount} [{category}])')
+
+# view monthly summary
+def view_monthly_summary(month=''):
     now = datetime.now()
     year = str(now.year)
     if not month:
@@ -136,6 +139,7 @@ def view_transactions(month=''):
     transactions_data = load_data(year)
     period_transactions = []
     
+    categories = load_file(DATA_DIR, 'categories')
     
     if str(month) not in transactions_data:
         print(f'There are no transactions for {calendar.month_name[int(month)]}')
@@ -150,12 +154,21 @@ def view_transactions(month=''):
     
     cumulative_by_name = defaultdict(int)
     cumulative_by_category = defaultdict(int)
+    cumulative_need = 0
+    cumulative_want = 0
 
     for obj in period_transactions:
         # Group by name
+        if get_category_type(obj['category'], categories) == 'want':
+            cumulative_want += obj['amount']
+        elif obj['type'] != 'income':
+            cumulative_need += obj['amount']
+        if ignore_field(obj["category"], categories): continue
         cumulative_by_name[obj["name"]] += obj["amount"]
-        # Group by type
+        # Group by category
         cumulative_by_category[obj["category"]] += obj["amount"]
+        
+        
 
     # Step 2: Find the name with the highest cumulative amount
     highest_name = max(cumulative_by_name, key=cumulative_by_name.get)
@@ -171,12 +184,12 @@ def view_transactions(month=''):
     for t in period_transactions:
         amount = t['amount']
         total_expense += amount
-        print(f"{t['date']} - {t['name']}: ${amount:.2f} ({t['category']})")
+        print(f"{t['date']} - {t['name']}: ${amount:.2f} ({t['category']} {get_category_icon(t['category'], categories)})")
     print("\nIncome:")
     for t in period_income:
         amount = t['amount']
         total_income += amount
-        print(f"{t['date']} - {t['name']}: ${amount:.2f} ({t['category']})")
+        print(f"{t['date']} - {t['name']}: ${amount:.2f} ({t['category']} {get_category_icon(t['category'], categories)})")
 
     print(f"\nTotal Expenses this month: ${total_expense:.2f}")
     print(f"Total Income this month: ${total_income:.2f}")
@@ -185,6 +198,15 @@ def view_transactions(month=''):
     print(f"\nLocation with highest amount: {highest_name} - ${highest_name_amount:.2f}")
     
     print(f"Category with highest amount: {highest_category} - ${highest_category_amount:.2f}")
+    
+    print(f"\nNeeds: ${cumulative_need:.2f}")
+    print(f"Wants: ${cumulative_want:.2f}")
+    
+    print(f"\nNeeds % (target: 50): {(cumulative_need / total_income) * 100:.2f}%")
+    print(f"\Wants % (target: 30): {(cumulative_want / total_income) * 100:.2f}%")
+    # print(f"\Savings % (target: 20): {(cumulative_want+cumulative_need / total_income) * 100:.2f}%")
+
+
 
 
 def category_breakdown(month=''):
@@ -229,6 +251,8 @@ def view_year_transactions(year=''):
     transactions_data = load_data(year)
     
     period_transactions = [t for t in transactions_data]
+    period_transactions = dict(sorted(transactions_data.items(), key=lambda item: int(item[0])))
+
     total_expenses = 0
     total_income = 0
     
@@ -321,12 +345,12 @@ def main():
             amount = float(input("Enter income amount: "))
             date = input("Enter date (MM/DD/YYYY) [if left empty, it will add the current day]: ")
             description = input("Enter description (optional): ")
-            add_transaction(name, "income", amount, 'income', description, date)
+            add_transaction(name, "income", amount, 'Income', description, date)
             print("Income added!")
         elif choice == '3':
             print('\n---BREAKDOWN BY MONTH---')
             month = input('Enter month (as a number) [optional]: ')
-            view_transactions(month)
+            view_monthly_summary(month)
         elif choice == '4':
             print('\n---BREAKDOWN OF THE CURRENT YEAR---')
             view_year_transactions()
