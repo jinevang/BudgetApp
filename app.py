@@ -22,27 +22,16 @@ data = {
 }
 
 def add_reoccuring(name, type, amount, category, description='', date=''):
-    print()
+    print('Reoccuring transactions haven\'t been implemented yet')
 
 def update_category(categoryname):
-    print()
+    print('Update category hasn\'t been implemented yet')
 
 def delete_category(replacementcategory):
-    print()
-
-def choose_category():
-    print("Please choose a category for the expense:")
-    for idx, category in enumerate(expense_categories, start=1):
-        print(f"{idx}) {category}")
-    while True:
-        try:
-            choice = int(input("Enter the number of the category: "))
-            if 1 <= choice <= len(expense_categories):
-                return expense_categories[choice - 1]
-            else:
-                print("Invalid choice, please enter a valid number.")
-        except ValueError:
-            print("Invalid input, please enter a number.")
+    print('Delete category hasn\'t been implemented yet')
+    
+def update_transaction(date, name):
+    print('Updating transactions hasn\'t been implemented yet')
 
 def load_data(year):
     file_name = os.path.join(DATA_DIR, f'{year}_budget_data.json')
@@ -127,7 +116,7 @@ def add_transaction(name, type, amount, category, description='', date=''):
     # Save the updated data
     save_data(year, data)
     
-    print(f'{type} added! ({name} - ${amount} [{category}])')
+    print(f'{type.capitalize()} added! ({name} - ${amount} [{category}])')
 
 # view monthly summary
 def view_monthly_summary(month=''):
@@ -203,7 +192,7 @@ def view_monthly_summary(month=''):
     print(f"Wants: ${cumulative_want:.2f}")
     
     print(f"\nNeeds % (target: 50): {(cumulative_need / total_income) * 100:.2f}%")
-    print(f"\Wants % (target: 30): {(cumulative_want / total_income) * 100:.2f}%")
+    print(f"Wants % (target: 30): {(cumulative_want / total_income) * 100:.2f}%")
     # print(f"\Savings % (target: 20): {(cumulative_want+cumulative_need / total_income) * 100:.2f}%")
 
 
@@ -333,12 +322,10 @@ def main():
             print('\n---ADD NEW EXPENSE---')
             name = input("Enter name of expense: ")
             amount = float(input("Enter expense amount: "))
-            category = choose_category()
+            category = choose_from_array(expense_categories, 'Choose category')
             date = input("Enter date (MM/DD/YYYY) [if left empty, it will add the current day]: ")
             description = input("Enter description (optional): ")
             add_transaction(name, "expense", amount, category, description, date)
-            print('Expense added!')
-
         elif choice == '2':
             print("\n---ADD NEW INCOME---")
             name = input("Enter name of income source: ")
@@ -346,7 +333,6 @@ def main():
             date = input("Enter date (MM/DD/YYYY) [if left empty, it will add the current day]: ")
             description = input("Enter description (optional): ")
             add_transaction(name, "income", amount, 'Income', description, date)
-            print("Income added!")
         elif choice == '3':
             print('\n---BREAKDOWN BY MONTH---')
             month = input('Enter month (as a number) [optional]: ')
