@@ -47,11 +47,12 @@ def load_categories():
     if data["categories"]:
         expense_categories = [c["name"] for c in data["categories"]]
 
-def add_category(category_name, type, icon=''):
+def add_category(category_name, type, icon='', ignore='N'):
     global expense_categories
     categories = load_file(DATA_DIR, 'categories')
     
     type = type.lower()
+    ignore = ignore.lower()
     
     if category_name in expense_categories:
         print("This category is already in the category list")
@@ -64,7 +65,8 @@ def add_category(category_name, type, icon=''):
     new_category = {
         "name": category_name,
         "type": "want" if type.startswith('w') else "need",
-        "icon": icon
+        "icon": icon,
+        "ignore": True if ignore.startswith('Y') else False
     }
     
     categories["categories"].append(new_category)
@@ -191,12 +193,10 @@ def view_monthly_summary(month=''):
     print(f"\nNeeds: ${cumulative_need:.2f}")
     print(f"Wants: ${cumulative_want:.2f}")
     
-    print(f"\nNeeds % (target: 50): {(cumulative_need / total_income) * 100:.2f}%")
-    print(f"Wants % (target: 30): {(cumulative_want / total_income) * 100:.2f}%")
+    if total_income > 0:
+        print(f"\nNeeds % (target: 50): {(cumulative_need / total_income) * 100:.2f}%")
+        print(f"Wants % (target: 30): {(cumulative_want / total_income) * 100:.2f}%")
     # print(f"\Savings % (target: 20): {(cumulative_want+cumulative_need / total_income) * 100:.2f}%")
-
-
-
 
 def category_breakdown(month=''):
     if not month:
@@ -246,7 +246,7 @@ def view_year_transactions(year=''):
     total_income = 0
     
     for t in period_transactions:
-        print(calendar.month_name[int(t)])
+        print(f'\n{calendar.month_name[int(t)]}')
         expenses = 0
         income = 0
         for i in transactions_data[str(t)]:
@@ -258,8 +258,8 @@ def view_year_transactions(year=''):
         
         total_expenses += expenses
         total_income += income
-        print(f"Total Expenses: ${expenses:.2f}")
-        print(f"Total Income: ${income:.2f}")
+        print(f"Expenses: ${expenses:.2f}")
+        print(f"Income: ${income:.2f}")
         print(f"Net: ${income-expenses:.2f}")
     
     print("\nSummary of full year:")
@@ -285,7 +285,8 @@ def choose_settings():
         category = input('Enter new category name: ')
         type = input('Want/Need?: ')
         icon = input('Add custom icon?: ')
-        add_category(category, type, icon)
+        ignore = input('Should this category be ignored in top category summaries?: (Y/N)')
+        add_category(category, type, icon, ignore)
     if chosensetting == 1:
         # delete category
         print()
