@@ -13,7 +13,7 @@ DATA_DIR = 'data'
 
 expense_categories = []
 
-settings = ["Add category", "Delete category", "Update category", "Change ratio targets", "Exit"]
+settings = ["Add category", "Delete category", "Update category", "Change ratio targets", "Add recurring transaction", "Exit"]
 
 options = ["Add income", "Add expense", "View balance", "See current month breakdown", "See current year breakdown"]
 
@@ -21,27 +21,40 @@ data = {
      "transactions": []
 }
 
-def add_reoccuring(name, type, amount, category, description='', date=''):
+def add_recurring(name, type, amount, category, date, increment):
     print('Reoccuring transactions haven\'t been implemented yet')
+    recurring = load_file(DATA_DIR, 'recurring')
+    type = type.lower()
+    ignore = ignore.lower()
+    
+    if not type.startswith("w") and not type.startswith("n"):
+        print("Type needs to either be want or need")
+        return
+    
+    new_recurring = {
+        "category": category,
+        "name": name,
+        "amount": amount,
+        "type": "want" if type.startswith('w') else "need",
+        "increment": increment,
+        "date": date
+    }
+    
+    recurring["recurring"].append(new_recurring)
+    
+    save_to_file(DATA_DIR, recurring, 'recurring')
+    
 
 def setup_month(month):
-    # TODO need to make sure this only runs ONE TIME
-    # TODO do i need to do something for when it starts?
-    # ? what happens when you retroactively add a transaction
     print()
     
     currentyear = datetime.now().year
     
-    recurring = load_file(DATA_DIR, 'recurring')
-    print(recurring)
-    
+    recurring = load_file(DATA_DIR, 'recurring')    
     recurring_setting = [s for s in recurring['recurring']]
-    
     for item in recurring_setting:
-        
         normalizedDates = []
         if(item["increment"] == "month"):
-            
             for date in item["date"]:
                 if type(date) == int:
                     normalizedDates.append(str(month) + "/" + str(date) + "/" + str(currentyear))
@@ -51,22 +64,19 @@ def setup_month(month):
                     match date:
                         case "last":
                             normalizedDates.append(str(month) + "/" + str(days) + "/" + str(currentyear))
-                            # print('Normalized date: ' + normalizedDates + '\n')
-                            
-
                         case "middle":
                             normalizedDates.append(str(month) + "/" + str(math.ceil(days/2)) + "/" + str(currentyear))
-                            # print('Normalized date: ' + normalizedDates + '\n')
-                    
-                    print(normalizedDates)
-                            
+                        case "start":
+                            normalizedDates.append(str(month) + "/1/" + str(currentyear))
+
         elif(item["increment"] == "year"):
-            print("it is a year recurring")
+            m, day = str(item['date']).split('/')
+            newdate = m + '/' + day + '/' + str(currentyear)
+            if int(m) == month:
+                add_transaction(item["name"], item["type"], item["amount"], item["category"], "Added automatically via reoccuring", newdate, monthsetup=True)
         
         for date in normalizedDates:
-            print(date)
-            print(item["name"])
-            add_transaction(item["name"], item["type"], item["amount"], item["category"], "Setup via reoccuring", date)
+            add_transaction(item["name"], item["type"], item["amount"], item["category"], "Added automatically via reoccuring", date, monthsetup=True)
 
     
 def update_category(categoryname, replace):
@@ -79,11 +89,7 @@ def update_transaction(date, name):
     print('Updating transactions hasn\'t been implemented yet')
 
 def load_data(year):
-    file_name = os.path.join(DATA_DIR, f'{year}_budget_data.json')
-    if os.path.exists(file_name):
-        with open(file_name, 'r') as file:
-            return json.load(file)
-    return {}
+    return load_file(DATA_DIR, f'{year}_budget_data')
 
 def load_categories():
     global expense_categories
@@ -130,10 +136,8 @@ def save_data(year, data):
     with open(file_name, 'w') as file:
         json.dump(data, file, indent=4)
 
-def view_recent_transactions(number=5):
-    print('Viewing recent transactions')
-
-def add_transaction(name, type, amount, category, description='', date=''):
+def add_transaction(name, type, amount, category, description='', date='', monthsetup=False):
+    newentry = False
     
     if not date:
         date = datetime.now().strftime('%m/%d/%Y')
@@ -146,6 +150,7 @@ def add_transaction(name, type, amount, category, description='', date=''):
     data = load_data(year)
     
     if month not in data:
+        newentry = True
         data[month] = []
     
     transaction = {
@@ -163,7 +168,10 @@ def add_transaction(name, type, amount, category, description='', date=''):
     # Save the updated data
     save_data(year, data)
     
-    print(f'{type.capitalize()} added! ({name} - ${amount} [{category}])')
+    not monthsetup and print(f'{type.capitalize()} added! ({name} - ${amount} [{category}])')
+
+    if newentry:
+        setup_month(int(month))
 
 # view monthly summary
 def view_monthly_summary(month=''):
@@ -244,38 +252,84 @@ def view_monthly_summary(month=''):
     # print(f"\Savings % (target: 20): {(cumulative_want+cumulative_need / total_income) * 100:.2f}%")
 
 def category_breakdown(month=''):
+    
     if not month:
         month = datetime.now().month
     
-    print(f'\nViewing summary for categories for {calendar.month_name[int(month)]}')
+    isyear = False
+
+    if type(month) is str and month.lower() == 'y':
+        print(f'\nViewing summary of categories for {datetime.now().year}')
+        isyear = True
+    elif type(month) is int:
+        print(f'\nViewing summary of categories for {calendar.month_name[int(month)]}')
+    else:
+        try:
+            int(month)
+            print(f'\nViewing summary of categories for {calendar.month_name[int(month)]}')
+        except ValueError:
+            print('\nNot a valid selection, try again please')
+            return
+    
     transactions_data = load_data(datetime.now().year)
     
-    period_transactions = [t for t in transactions_data[str(month)] if t['type'] != "income"]
+    if isyear:
+        period_transactions = [t for month_data in transactions_data.values() for t in month_data if t['type'] != "income"]
+    else:
+        period_transactions = [t for t in transactions_data[str(month)] if t['type'] != "income"]
 
     cumulative_by_category = defaultdict(int)
     
     for obj in period_transactions:
         cumulative_by_category[obj["category"]] += obj["amount"]
+    
+    sorted_categories = sorted(cumulative_by_category.items(), key=lambda item: item[1], reverse=True)
         
-    for category, amount in cumulative_by_category.items():
+    for category, amount in sorted_categories:
         print(f"{category}: ${amount:.2f}")
 
-def location_breakdown(month=''):
+def location_breakdown(month='', limit=15):
     if not month:
         month = datetime.now().month
     
-    print(f'\nViewing summary for location for {calendar.month_name[int(month)]}')
+    isyear = False
+    
+    if type(month) is str and month.lower() == 'y':
+        print(f'\nViewing summary of locations for {datetime.now().year}')
+        isyear = True
+    else:
+        try:
+            int(month)
+            print(f'\nViewing summary of locations for {calendar.month_name[int(month)]}')
+        except ValueError:
+            print('\nNot a valid selection, try again please')
+            return
+    
     transactions_data = load_data(datetime.now().year)
     
-    period_transactions = [t for t in transactions_data[str(month)] if t['type'] != "income"]
-
+    if isyear:
+        period_transactions = [t for month_data in transactions_data.values() for t in month_data if t['type'] != "income"]
+    else:
+        period_transactions = [t for t in transactions_data[str(month)] if t['type'] != "income"]
     cumulative_by_name = defaultdict(int)
-    
+
     for obj in period_transactions:
         cumulative_by_name[obj["name"]] += obj["amount"]
-        
-    for name, amount in cumulative_by_name.items():
+    
+    sorted_locations = sorted(cumulative_by_name.items(), key=lambda item: item[1], reverse=True)
+
+    if not limit:
+        limit = len(sorted_locations)
+    elif int(limit) > len(sorted_locations) or int(limit) < 0:
+        limit = len(sorted_locations)
+    else:
+        limit = int(limit)
+
+    for name, amount in sorted_locations[:limit]:
         print(f"{name}: ${amount:.2f}")
+    
+    if len(sorted_locations) - limit > 0:
+        print(f"[...And {len(sorted_locations) - limit} more...]")
 
 def view_year_transactions(year=''):
     if not year:
@@ -333,14 +387,26 @@ def choose_settings():
         add_category(category, type, icon, ignore)
     if chosensetting == 1:
         # delete category
-        print()
+        print('Deleting categories has not been set up yet')
     if chosensetting == 2:
         # update category
-        print()
+        print('Updating categories has not been set up yet')
     if chosensetting == 3:
         # change ratio targets
-        print()
+        print('Ratio targets have not been set up yet')
     if chosensetting == 4:
+        # add recurring
+        print('\n---ADD RECURRING TRANSACTION---')
+        print('\nFor subscriptions, loan payments, pay, rent, and anything that happens on a fixed schedule')
+        name = input("Enter name of the transaction: ")
+        amount = input('Amount: ')
+        category = choose_from_array(expense_categories, 'Choose category')
+        increment = input('How often does it occur? (month/year): ')
+        date = input('Which day(s) does it occur on? Separate different days using a space.\nIncrement Monthly, Days can be 1, 15 => which means the recurring transaction will occur on the 1st and 15th of every month\nAdditonally, you can pass in conditional days as well: last, middle, and start\nFor increment year, type in the date like this: mm/dd, separate these out by spaces if it happens multiple times in a year but not on a month-to-month basis\n')
+        # TODO type is based off of the category
+        add_recurring(name, '', amount, category, date, increment)
+        
+    if chosensetting == 5:
         return
 
 def main():
@@ -379,19 +445,20 @@ def main():
             add_transaction(name, "income", amount, 'Income', description, date)
         elif choice == '3':
             print('\n---BREAKDOWN BY MONTH---')
-            month = input('Enter month (as a number) [optional]: ')
+            month = input('Enter month (as a number): ')
             view_monthly_summary(month)
         elif choice == '4':
             print('\n---BREAKDOWN OF THE CURRENT YEAR---')
             view_year_transactions()
         elif choice == '5':
             print("\n---BREAKDOWN BY CATEGORY---")
-            month = input('Enter month (as number): ')
+            month = input('Enter month (as number), for full year, type Y: ')
             category_breakdown(month)
         elif choice =='6':
             print('\n---BREAKDOWN BY LOCATION---')
-            month = input('Enter month (as number): ')
-            location_breakdown(month)
+            month = input('Enter month (as number), for full year, type Y: ')
+            limit = input('Would you like to limit how many are shown? If not, skip: ')
+            location_breakdown(month, limit)
         elif choice == '7':
             print('\n---SETTINGS---')
             choose_settings()
@@ -402,6 +469,9 @@ def main():
         elif choice == '9':
             print('This is a lightweight budgeting app built in Python!')
             print('© Evan Jin 2024')
+            print('Notes')
+            print('- Generally, months should be passed in as integers')
+            print('- You can usually press enter to skip a step, and it will fill in with a default (usually the current day/month/year)')
         elif choice == 'sm':
             setup_month(12)
         else:

@@ -52,7 +52,7 @@ def load_file(datadir, filename):
           return json.load(file)
   return {}
 
-def save_to_file(data, datadir, filename):
+def save_to_file(datadir, data, filename):
   file_name = os.path.join(datadir, f'{filename}.json')
   with open(file_name, 'w') as file:
       json.dump(data, file, indent=4)
