@@ -3,7 +3,7 @@ import os
 from datetime import datetime
 import calendar
 from collections import defaultdict
-
+import math
 
 from helpers import parse_date, load_file, save_to_file, choose_from_array, ignore_field, get_category_icon, get_category_type
 
@@ -24,7 +24,52 @@ data = {
 def add_reoccuring(name, type, amount, category, description='', date=''):
     print('Reoccuring transactions haven\'t been implemented yet')
 
-def update_category(categoryname):
+def setup_month(month):
+    # TODO need to make sure this only runs ONE TIME
+    # TODO do i need to do something for when it starts?
+    # ? what happens when you retroactively add a transaction
+    print()
+    
+    currentyear = datetime.now().year
+    
+    recurring = load_file(DATA_DIR, 'recurring')
+    print(recurring)
+    
+    recurring_setting = [s for s in recurring['recurring']]
+    
+    for item in recurring_setting:
+        
+        normalizedDates = []
+        if(item["increment"] == "month"):
+            
+            for date in item["date"]:
+                if type(date) == int:
+                    normalizedDates.append(str(month) + "/" + str(date) + "/" + str(currentyear))
+                    print(normalizedDates)
+                elif type(date) == str:
+                    days = calendar.monthrange(currentyear, month)[1]
+                    match date:
+                        case "last":
+                            normalizedDates.append(str(month) + "/" + str(days) + "/" + str(currentyear))
+                            # print('Normalized date: ' + normalizedDates + '\n')
+                            
+
+                        case "middle":
+                            normalizedDates.append(str(month) + "/" + str(math.ceil(days/2)) + "/" + str(currentyear))
+                            # print('Normalized date: ' + normalizedDates + '\n')
+                    
+                    print(normalizedDates)
+                            
+        elif(item["increment"] == "year"):
+            print("it is a year recurring")
+        
+        for date in normalizedDates:
+            print(date)
+            print(item["name"])
+            add_transaction(item["name"], item["type"], item["amount"], item["category"], "Setup via reoccuring", date)
+
+    
+def update_category(categoryname, replace):
     print('Update category hasn\'t been implemented yet')
 
 def delete_category(replacementcategory):
@@ -267,7 +312,6 @@ def view_year_transactions(year=''):
     print(f"Total Income: ${total_income:.2f}")
     print(f"Net: ${total_income-total_expenses:.2f}")
 
-
 def view_summary(month=''):
     if not month:
         month = datetime.now().month
@@ -298,7 +342,6 @@ def choose_settings():
         print()
     if chosensetting == 4:
         return
-
 
 def main():
     ensure_data_dir_exists()
@@ -359,6 +402,8 @@ def main():
         elif choice == '9':
             print('This is a lightweight budgeting app built in Python!')
             print('© Evan Jin 2024')
+        elif choice == 'sm':
+            setup_month(12)
         else:
             print("Invalid option! Please try again.")
 
