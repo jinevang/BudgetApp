@@ -237,7 +237,6 @@ def view_monthly_summary(month=''):
 
     print(f"\nTotal Expenses this month: ${total_expense:.2f}")
     print(f"Total Income this month: ${total_income:.2f}")
-    print(f"Net for this month: ${total_income - total_expense:.2f}")
     
     print(f"\nLocation with highest amount: {highest_name} - ${highest_name_amount:.2f}")
     
@@ -245,10 +244,14 @@ def view_monthly_summary(month=''):
     
     print(f"\nNeeds: ${cumulative_need:.2f}")
     print(f"Wants: ${cumulative_want:.2f}")
+    print(f"Savings: ${(total_income - total_expense):.2f}")
     
     if total_income > 0:
-        print(f"\nNeeds % (target: 50): {(cumulative_need / total_income) * 100:.2f}%")
-        print(f"Wants % (target: 30): {(cumulative_want / total_income) * 100:.2f}%")
+        needs = (cumulative_need / total_income) * 100
+        wants = (cumulative_want / total_income) * 100
+        print(f"\nNeeds % (target: 50): {needs:.2f}%")
+        print(f"Wants % (target: 30): {wants:.2f}%")
+        print(f"Savings % (target: 20): {(100 - needs - wants):.2f}%")
     # print(f"\Savings % (target: 20): {(cumulative_want+cumulative_need / total_income) * 100:.2f}%")
 
 def category_breakdown(month=''):
