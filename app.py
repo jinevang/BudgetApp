@@ -58,7 +58,6 @@ def setup_month(month):
             for date in item["date"]:
                 if type(date) == int:
                     normalizedDates.append(str(month) + "/" + str(date) + "/" + str(currentyear))
-                    print(normalizedDates)
                 elif type(date) == str:
                     days = calendar.monthrange(currentyear, month)[1]
                     match date:
