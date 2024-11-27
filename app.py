@@ -211,13 +211,11 @@ def view_monthly_summary(month=''):
         # Group by category
         cumulative_by_category[obj["category"]] += obj["amount"]
         
-        
-
-    # Step 2: Find the name with the highest cumulative amount
+    # highest name cumulative
     highest_name = max(cumulative_by_name, key=cumulative_by_name.get)
     highest_name_amount = cumulative_by_name[highest_name]
 
-    # Step 3: Find the type with the highest cumulative amount
+    # highest category
     highest_category = max(cumulative_by_category, key=cumulative_by_category.get)
     highest_category_amount = cumulative_by_category[highest_category]
 
@@ -251,7 +249,6 @@ def view_monthly_summary(month=''):
         print(f"\nNeeds % (target: 50): {needs:.2f}%")
         print(f"Wants % (target: 30): {wants:.2f}%")
         print(f"Savings % (target: 20): {(100 - needs - wants):.2f}%")
-    # print(f"\Savings % (target: 20): {(cumulative_want+cumulative_need / total_income) * 100:.2f}%")
 
 def category_breakdown(month=''):
     
@@ -259,6 +256,7 @@ def category_breakdown(month=''):
         month = datetime.now().month
     
     isyear = False
+    categories = load_file(DATA_DIR, 'categories')
 
     if type(month) is str and month.lower() == 'y':
         print(f'\nViewing summary of categories for {datetime.now().year}')
@@ -280,15 +278,18 @@ def category_breakdown(month=''):
     else:
         period_transactions = [t for t in transactions_data[str(month)] if t['type'] != "income"]
 
-    cumulative_by_category = defaultdict(int)
+    cumulative_by_category = defaultdict(lambda: {"amount": 0, "count": 0})
     
     for obj in period_transactions:
-        cumulative_by_category[obj["category"]] += obj["amount"]
-    
-    sorted_categories = sorted(cumulative_by_category.items(), key=lambda item: item[1], reverse=True)
-        
-    for category, amount in sorted_categories:
-        print(f"{category}: ${amount:.2f}")
+        cumulative_by_category[obj["category"]]["amount"] += obj["amount"]
+        cumulative_by_category[obj["category"]]["count"] += 1
+
+    sorted_categories = sorted(cumulative_by_category.items(), key=lambda item: item[1]["amount"], reverse=True)
+
+    for category, data in sorted_categories:
+        icon = get_category_icon(category, categories).strip()
+
+        print(f"{icon} {category}: ${data['amount']:.2f} ({data['count']} transaction{'s' if data['count'] > 1 else ''})")
 
 def location_breakdown(month='', limit=15):
     if not month:
@@ -313,12 +314,13 @@ def location_breakdown(month='', limit=15):
         period_transactions = [t for month_data in transactions_data.values() for t in month_data if t['type'] != "income"]
     else:
         period_transactions = [t for t in transactions_data[str(month)] if t['type'] != "income"]
-    cumulative_by_name = defaultdict(int)
+    cumulative_by_name = defaultdict(lambda: {"amount": 0, "count": 0})
 
     for obj in period_transactions:
-        cumulative_by_name[obj["name"]] += obj["amount"]
+        cumulative_by_name[obj["name"]]["amount"] += obj["amount"]
+        cumulative_by_name[obj["name"]]["count"] += 1
     
-    sorted_locations = sorted(cumulative_by_name.items(), key=lambda item: item[1], reverse=True)
+    sorted_locations = sorted(cumulative_by_name.items(), key=lambda item: item[1]["amount"], reverse=True)
 
     if not limit:
         limit = len(sorted_locations)
@@ -327,8 +329,8 @@ def location_breakdown(month='', limit=15):
     else:
         limit = int(limit)
 
-    for name, amount in sorted_locations[:limit]:
-        print(f"{name}: ${amount:.2f}")
+    for name, data in sorted_locations:
+        print(f"{name}: ${data['amount']:.2f}")
     
     if len(sorted_locations) - limit > 0:
         print(f"[...And {len(sorted_locations) - limit} more...]")
