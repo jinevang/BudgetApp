@@ -329,7 +329,7 @@ def location_breakdown(month='', limit=15):
     else:
         limit = int(limit)
 
-    for name, data in sorted_locations:
+    for name, data in sorted_locations[:limit]:
         print(f"{name}: ${data['amount']:.2f}")
     
     if len(sorted_locations) - limit > 0:
