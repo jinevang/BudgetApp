@@ -175,7 +175,11 @@ def add_transaction(name, type, amount, category, description='', date='', month
 # view monthly summary
 def view_monthly_summary(month=''):
     now = datetime.now()
-    year = str(now.year)
+    try:
+        month, year = month.split('/')
+    except:
+        print('nothing')
+        year = str(now.year)
     if not month:
         month = now.month
 
@@ -449,7 +453,7 @@ def main():
             add_transaction(name, "income", amount, 'Income', description, date)
         elif choice == '3':
             print('\n---BREAKDOWN BY MONTH---')
-            month = input('Enter month (as a number): ')
+            month = input('Enter month [mm/yyyy]: ')
             view_monthly_summary(month)
         elif choice == '4':
             print('\n---BREAKDOWN OF THE CURRENT YEAR---')
