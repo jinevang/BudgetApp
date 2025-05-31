@@ -1,3 +1,4 @@
+from curses.ascii import isdigit
 import json
 import os
 from datetime import datetime
@@ -7,13 +8,11 @@ import math
 
 from helpers import parse_date, load_file, save_to_file, choose_from_array, ignore_field, get_category_icon, get_category_type
 
-from operator import itemgetter
-
 DATA_DIR = 'data'
 
 expense_categories = []
 
-settings = ["Add category", "Delete category", "Update category", "Change ratio targets", "Add recurring transaction", "Exit"]
+settings = ["Add category", "Delete category", "Update category", "Change ratio targets", "Add recurring transaction", "Remove recurring transaction", "Exit"]
 
 options = ["Add income", "Add expense", "View balance", "See current month breakdown", "See current year breakdown"]
 
@@ -22,57 +21,68 @@ data = {
 }
 
 def add_recurring(name, type, amount, category, date, increment):
-    print('Reoccuring transactions haven\'t been implemented yet')
     recurring = load_file(DATA_DIR, 'recurring')
     type = type.lower()
-    ignore = ignore.lower()
-    
-    if not type.startswith("w") and not type.startswith("n"):
-        print("Type needs to either be want or need")
-        return
-    
+        
     new_recurring = {
         "category": category,
         "name": name,
         "amount": amount,
-        "type": "want" if type.startswith('w') else "need",
+        "type": get_category_type(category),
         "increment": increment,
-        "date": date
+        "date": date.replace(' ', '').split(',')
     }
     
     recurring["recurring"].append(new_recurring)
     
     save_to_file(DATA_DIR, recurring, 'recurring')
-    
 
-def setup_month(month):
+def delete_recurring(name):
+    recurring = load_file(DATA_DIR, 'recurring')
+    
+    recurring['recurring'] = [r for r in recurring['recurring'] if r['name'] != name]
+    
+    save_to_file(DATA_DIR, recurring, 'recurring')
+    
+def delete_transaction(date):
     print()
-    
+    if not date:
+        date = datetime.now().strftime('%m/%d/%Y')
+        
+    if date:
+        date = parse_date(date)
+
+    month, _, year = date.split('/')
+
+    data = load_data(year)
+
+def setup_month(date):
     currentyear = datetime.now().year
-    
+    currentmonth = datetime.now().month
+
     recurring = load_file(DATA_DIR, 'recurring')    
     recurring_setting = [s for s in recurring['recurring']]
     for item in recurring_setting:
         normalizedDates = []
         if(item["increment"] == "month"):
             for date in item["date"]:
-                if type(date) == int:
-                    normalizedDates.append(str(month) + "/" + str(date) + "/" + str(currentyear))
+                if type(date) == int or isdigit(date):
+                    normalizedDates.append(str(currentmonth) + "/" + str(date) + "/" + str(currentyear))
                 elif type(date) == str:
-                    days = calendar.monthrange(currentyear, month)[1]
+                    days = calendar.monthrange(currentyear, currentmonth)[1]
                     match date:
                         case "last":
-                            normalizedDates.append(str(month) + "/" + str(days) + "/" + str(currentyear))
+                            normalizedDates.append(str(currentmonth) + "/" + str(days) + "/" + str(currentyear))
                         case "middle":
-                            normalizedDates.append(str(month) + "/" + str(math.ceil(days/2)) + "/" + str(currentyear))
+                            normalizedDates.append(str(currentmonth) + "/" + str(math.ceil(days/2)) + "/" + str(currentyear))
                         case "start":
-                            normalizedDates.append(str(month) + "/1/" + str(currentyear))
+                            normalizedDates.append(str(currentmonth) + "/1/" + str(currentyear))
 
         elif(item["increment"] == "year"):
             m, day = str(item['date']).split('/')
             newdate = m + '/' + day + '/' + str(currentyear)
-            if int(m) == month:
-                add_transaction(item["name"], item["type"], item["amount"], item["category"], "Added automatically via reoccuring", newdate, monthsetup=True)
+            if int(m) == currentmonth:
+                add_transaction(item["name"], get_category_type(item["category"]), item["amount"], item["category"], "Added automatically via reoccuring", newdate, monthsetup=True)
         
         for date in normalizedDates:
             add_transaction(item["name"], item["type"], item["amount"], item["category"], "Added automatically via reoccuring", date, monthsetup=True)
@@ -84,7 +94,7 @@ def update_category(categoryname, replace):
 def delete_category(replacementcategory):
     print('Delete category hasn\'t been implemented yet')
     
-def update_transaction(date, name):
+def update_transaction(date):
     print('Updating transactions hasn\'t been implemented yet')
 
 def load_data(year):
@@ -178,7 +188,7 @@ def view_monthly_summary(month=''):
     try:
         month, year = month.split('/')
     except:
-        print('nothing')
+        # print('nothing')
         year = str(now.year)
     if not month:
         month = now.month
@@ -206,7 +216,7 @@ def view_monthly_summary(month=''):
 
     for obj in period_transactions:
         # Group by name
-        if get_category_type(obj['category'], categories) == 'want':
+        if get_category_type(obj['category']) == 'want':
             cumulative_want += obj['amount']
         elif obj['type'] != 'income':
             cumulative_need += obj['amount']
@@ -229,12 +239,12 @@ def view_monthly_summary(month=''):
     for t in period_transactions:
         amount = t['amount']
         total_expense += amount
-        print(f"{t['date']} - {t['name']}: ${amount:.2f} ({t['category']} {get_category_icon(t['category'], categories)})")
+        print(f"{t['date']} - {t['name']}: ${amount:.2f} ({t['category']} {get_category_icon(t['category'])})")
     print("\nIncome:")
     for t in period_income:
         amount = t['amount']
         total_income += amount
-        print(f"{t['date']} - {t['name']}: ${amount:.2f} ({t['category']} {get_category_icon(t['category'], categories)})")
+        print(f"{t['date']} - {t['name']}: ${amount:.2f} ({t['category']} {get_category_icon(t['category'],)})")
 
     print(f"\nTotal Expenses this month: ${total_expense:.2f}")
     print(f"Total Income this month: ${total_income:.2f}")
@@ -291,7 +301,7 @@ def category_breakdown(month=''):
     sorted_categories = sorted(cumulative_by_category.items(), key=lambda item: item[1]["amount"], reverse=True)
 
     for category, data in sorted_categories:
-        icon = get_category_icon(category, categories).strip()
+        icon = get_category_icon(category).strip()
 
         print(f"{icon} {category}: ${data['amount']:.2f} ({data['count']} transaction{'s' if data['count'] > 1 else ''})")
 
@@ -384,6 +394,7 @@ def ensure_data_dir_exists():
 
 def choose_settings():
     chosensetting = choose_from_array(settings, "Which setting", True)
+    
     print(settings[chosensetting])
 
     if chosensetting == 0:
@@ -404,15 +415,22 @@ def choose_settings():
         print('Ratio targets have not been set up yet')
     if chosensetting == 4:
         # add recurring
+        newline="\\"
         print('\n---ADD RECURRING TRANSACTION---')
         print('\nFor subscriptions, loan payments, pay, rent, and anything that happens on a fixed schedule')
         name = input("Enter name of the transaction: ")
         amount = input('Amount: ')
         category = choose_from_array(expense_categories, 'Choose category')
         increment = input('How often does it occur? (month/year): ')
-        date = input('Which day(s) does it occur on? Separate different days using a space.\nIncrement Monthly, Days can be 1, 15 => which means the recurring transaction will occur on the 1st and 15th of every month\nAdditonally, you can pass in conditional days as well: last, middle, and start\nFor increment year, type in the date like this: mm/dd, separate these out by spaces if it happens multiple times in a year but not on a month-to-month basis\n')
+        date = input(f"Which day(s) does it occur on? Separate different days using a space.{'Days can be 1, 15 => which means the recurring transaction will occur on the 1st and 15th of every month - Additonally, you can pass in conditional days as well: last, middle, and start' if increment.startswith('m') else ''}{'For increment year, type in the date like this: mm/dd, separate these out by spaces if it happens multiple times in a year but not on a month-to-month basis' if increment.startswith('y') else ''}")
         # TODO type is based off of the category
         add_recurring(name, '', amount, category, date, increment)
+    if chosensetting == 5:
+        recurring = load_file(DATA_DIR, "recurring")
+        print('\n---REMOVE RECURRING TRANSACTION---')
+        to_remove = choose_from_array([item['name'] for item in recurring['recurring']])
+        delete_recurring(to_remove)
+
         
     if chosensetting == 5:
         return

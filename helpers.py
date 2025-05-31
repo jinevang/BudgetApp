@@ -2,6 +2,8 @@ from datetime import datetime
 import os
 import json
 
+DATA_DIR = 'data'
+
 def parse_date(date_str):
   try:
     parts = date_str.split('/')
@@ -27,13 +29,17 @@ def parse_date(date_str):
     print(f"Error: {e}")
     return None
 
-def get_category_type(category_name, data):
+def get_category_type(category_name):
+  data = load_file(DATA_DIR, 'categories')
+
   for category in data["categories"]:
     if category["name"] == category_name:
       return category["type"]
   return ""
 
-def get_category_icon(category_name, data):
+def get_category_icon(category_name):
+  data = load_file(DATA_DIR, 'categories')
+
   for category in data["categories"]:
     if category["name"] == category_name:
       return category["icon"]
