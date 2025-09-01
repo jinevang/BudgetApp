@@ -41,3 +41,8 @@ alias budget="cd ~/path/to/BudgetApp && python3 app.py"
 ```
 
 Happy budgeting!
+
+## Upcoming Features
+
+- There are still a few missing features especially in the settings
+- More aesthetically pleasing when you want to view the data
