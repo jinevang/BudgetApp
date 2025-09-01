@@ -8,64 +8,36 @@ To run:
 python3 app.py
 ```
 
-If you would like to set up a command to run it from anywhere with one word, you can set it up in Bash/zshrc!
+If you would like to set up a command to run it from anywhere with one word, you can set it up in Bash!
 
-## On Mac:
-
-```
-  cd ~/
-```
-
-Then,
+## How to setup:
 
 ```
-    touch .zshrc
-```
-
-Then to edit:
-
-```
-    nano .zshrc
-```
-
-Or if you have 'code' setup:
-
-```
-  code .zshrc
-```
-
-Add this line:
-
-```
-  alias budget="cd ~/path/to/BudgetApp && python3 app.py"
-```
-
-## On Windows:
-
-```
-  cd ~/
+cd ~/
 ```
 
 Then,
 
 ```
- nano ~/.bashrc
+touch .zshrc
 ```
 
 Then to edit:
 
 ```
-  vim ~/.bashrc
+nano .zshrc
 ```
 
 Or if you have 'code' setup:
 
 ```
-  code .zshrc
+code .zshrc
 ```
 
 Add this line:
 
 ```
-  alias budget="cd ~/path/to/BudgetApp && python3 app.py"
+alias budget="cd ~/path/to/BudgetApp && python3 app.py"
 ```
+
+Happy budgeting!
